@@ -108,4 +108,5 @@ const callCakeAssistantMakeOrder = async (oldThread, args) => {
 
 export {
     messageAssistant as messageFloGeneralAssistant,
+    GENERAL_ASSISTANT
 };

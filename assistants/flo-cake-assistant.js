@@ -101,4 +101,5 @@ for (const toolCall of toolCalls) {
 export {
     runCakeOrderAssistant,
     messageAssistant as messageFloCakeAssistant,
+    CAKE_ASSISTANT,
 };

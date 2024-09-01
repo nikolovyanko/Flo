@@ -1,6 +1,6 @@
 import express from "express";
-import {messageFloGeneralAssistant} from "../assistants/flo-general-assistant.js";
-import { messageFloCakeAssistant } from "../assistants/flo-cake-assistant.js";
+import { messageFloGeneralAssistant, GENERAL_ASSISTANT } from "../assistants/flo-general-assistant.js";
+import { messageFloCakeAssistant, CAKE_ASSISTANT } from "../assistants/flo-cake-assistant.js";
 import { validateApiKey } from "../middlewares/auth.js";
 import { deleteThreads } from "../commons/openaiUtils.js";
 
@@ -10,8 +10,8 @@ router.use(validateApiKey);
 
 const formatResponse = (responseMessage) => {
   const regex = /【.*source】/g;
-   return responseMessage.replace(regex, "");
- };
+  return responseMessage.replace(regex, "");
+};
 
 router.delete("/threadDel", async (req, res, next) => {
   try {
@@ -23,32 +23,35 @@ router.delete("/threadDel", async (req, res, next) => {
   }
 });
 
-// Start conversation with Flo General Assistant
-router.post("/floGeneral", async (req, res, next) => {
+router.post("/messageFlo", async (req, res, next) => {
   try {
-    const { message, thread } = req.body;
-    const { thread: newThread, responseMessage, assistant} = await messageFloGeneralAssistant(message, thread);
-    const response = formatResponse(responseMessage);
+    const { message, thread, assistanName } = req.body;
 
-    return res.json({ thread: newThread, response, assistant });
-  
-  } catch (error) {    
-    next(error);
-  }
-});
+    let result;
+    switch (assistanName) {
+      case GENERAL_ASSISTANT.NAME:
+        result = await handleAssistantMessage(message, thread, messageFloGeneralAssistant);
+        break;
 
-// Start conversation with Cake Assistant
-router.post("/floCake", async (req, res, next) => {
-  try {
-    const { message, thread } = req.body;
-    const { thread: newThread, responseMessage, assistant } = await messageFloCakeAssistant(message, thread);
-    const response = formatResponse(responseMessage);
-    
-    return res.json({ thread: newThread, response, assistant });
+      case CAKE_ASSISTANT.NAME:
+        result = await handleAssistantMessage(message, thread, messageFloCakeAssistant);
+        break;
+
+      default:
+        return res.status(400).json({ error: "Invalid assistant name" });
+    }
+
+    return res.json(result);
 
   } catch (error) {
     next(error);
   }
 });
+
+const handleAssistantMessage = async (message, thread, assistantFunction) => {
+  const { thread: newThread, responseMessage, assistant } = await assistantFunction(message, thread);
+  const response = formatResponse(responseMessage);
+  return { thread: newThread, response, assistant };
+};
 
 export { router };
