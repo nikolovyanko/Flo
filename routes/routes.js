@@ -25,10 +25,12 @@ router.delete("/threadDel", async (req, res, next) => {
 
 router.post("/messageFlo", async (req, res, next) => {
   try {
-    const { message, thread, assistanName } = req.body;
-
+    const { message, thread } = req.body;
+    let { assistantName } = req.body;
+    assistantName = assistantName || GENERAL_ASSISTANT.NAME;
+    
     let result;
-    switch (assistanName) {
+    switch (assistantName) {
       case GENERAL_ASSISTANT.NAME:
         result = await handleAssistantMessage(message, thread, messageFloGeneralAssistant);
         break;

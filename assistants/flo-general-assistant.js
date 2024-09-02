@@ -11,7 +11,13 @@ const GENERAL_ASSISTANT = {
     ID : process.env.FLO_GENERAL_ASSISTANT_ID,
     NAME : "GeneralAssistant",
 };
-const FUNCTIONS = { MAKE_ORDER: "makeOrder" };
+const FUNCTIONS = { 
+    CALL_CAKE_ASSISTANT: "callCakeAssistant", 
+    CALL_CATERING_ASSISTANT: "callCateringAssistant",
+    CALL_CUPCAKE_ASSISTANT: "callCupcakeAssistant",
+    CALL_EVENT_ASSISTANT: "callEventBookingAssistant",
+    CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
+};
 
 const messageAssistant = async (message, thread) => {
     try {
@@ -74,7 +80,7 @@ for (const toolCall of toolCalls) {
 
         // Call the required function
         switch (functionName) {
-            case FUNCTIONS.MAKE_ORDER:
+            case FUNCTIONS.CALL_CAKE_ASSISTANT:
                 return await callCakeAssistantMakeOrder(
                     thread,
                     functionArgs,
