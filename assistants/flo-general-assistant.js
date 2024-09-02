@@ -1,4 +1,5 @@
 import { messageFloCakeAssistant } from "./flo-cake-assistant.js";
+import { CustomError } from "../commons/customError.js";
 import { 
     createThread, 
     sendMessage, 
@@ -29,12 +30,9 @@ const messageAssistant = async (message, thread) => {
         return await runDefaultAssistant(thread, run);
     
     } catch (error) {
-        console.error("Error in messageAssistant:", error);
-        return {
-            thread: thread,
-            responseMessage:"Sorry there was a problem executing your request, can you please try again?",
-            assistant: GENERAL_ASSISTANT.NAME,
-        };
+        console.error(`Error in ${GENERAL_ASSISTANT.NAME} : ${error.message}`, error);
+        throw new CustomError(`Error in ${GENERAL_ASSISTANT.NAME} : ${error.message}`, error);
+
     }
 };
 

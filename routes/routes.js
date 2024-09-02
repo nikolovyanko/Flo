@@ -28,7 +28,7 @@ router.post("/messageFlo", async (req, res, next) => {
     const { message, thread } = req.body;
     let { assistantName } = req.body;
     assistantName = assistantName || GENERAL_ASSISTANT.NAME;
-    
+
     let result;
     switch (assistantName) {
       case GENERAL_ASSISTANT.NAME:
@@ -46,7 +46,11 @@ router.post("/messageFlo", async (req, res, next) => {
     return res.json(result);
 
   } catch (error) {
-    next(error);
+    if (error.name === "CustomError") {
+      return res.status(400).json({ error: error.message });
+    } else {
+      next(error);
+    }
   }
 });
 
