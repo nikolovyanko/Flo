@@ -8,6 +8,7 @@ import {
     listMessages,
     deleteThread
 } from "../commons/openaiUtils.js";
+import { getTodayDate } from "../commons/shared-functions.js";
 
 const CAKE_ASSISTANT = {
     ID: process.env.FLO_CAKE_ASSISTANT_ID,
@@ -15,7 +16,15 @@ const CAKE_ASSISTANT = {
     LIVE_AGENT_ENDPOINT: process.env.LIVE_AGENT_ENDPOINT,
 };
 
-const FUNCTIONS = { CALL_LIVE_AGENT: "callLiveAgent" };
+const FUNCTIONS = {
+    CALL_LIVE_AGENT: "callLiveAgent",
+    GET_TODAY_DATE: "getTodaysDateInUK",
+
+    //NOT IMPLEMENTED YET
+    MAKE_CAKE_ORDER: "makeCakeOrder",
+    GET_WHATSAPP_DETAILS: "getWhatsappDetails",
+    CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
+};
 //TODO put the logic for callLiveAgent function inside the openaiUtils.js file and add parameter for summary 
 //the summary will be individual for every assistant however it will be treated the same way.
 
@@ -74,11 +83,10 @@ const handleToolCalls = async (thread, run, manychatId) => {
 
             // Call the needed function
             switch (functionName) {
-                case FUNCTIONS.NONE:
-                    resolvedActionMessage = makeOrder(functionArgs);
-                    break;
                 case FUNCTIONS.CALL_LIVE_AGENT:
                     return await callLiveAgent(thread, functionArgs, manychatId);
+                case FUNCTIONS.GET_TODAY_DATE:
+                    await getTodayDateInUK(thread, run, toolId);    
                 default:
                     break;
             }
@@ -114,6 +122,23 @@ const callLiveAgent = async (thread, summary, manychatId) => {
         console.error('Error calling live agent:', error);
         throw error;
     }
+};
+
+const getTodayDateInUK = async (thread, run, toolId) => {
+    const datetime = await getTodayDate();
+
+        await openaiClient.beta.threads.runs.submitToolOutputs(
+            thread,
+            run.id,
+            {
+                tool_outputs: [
+                    {
+                        tool_call_id: toolId,
+                        output: datetime,
+                    },
+                ],
+            },
+        );
 };
 
 export {
