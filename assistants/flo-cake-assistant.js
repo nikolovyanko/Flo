@@ -56,9 +56,6 @@ const runCakeOrderAssistant = async (thread, run, manychatId) => {
         //Checking the status at the end of the loop to avoid unnecessary polling
         run = await retrieveRun(thread, run.id);
     }
-
-    // const messages = await listMessages(thread, run.id);
-    // const responseMessage = await messages.data[0].content[0].text.value;
     
     const responseMessage = await getMessage(thread, run);
 
