@@ -57,15 +57,22 @@ const runCakeOrderAssistant = async (thread, run, manychatId) => {
         run = await retrieveRun(thread, run.id);
     }
 
-    const messages = await listMessages(thread, run.id);
-
-    const responseMessage = await messages.data[0].content[0].text.value;
+    // const messages = await listMessages(thread, run.id);
+    // const responseMessage = await messages.data[0].content[0].text.value;
+    
+    const responseMessage = await getMessage(thread, run);
 
     return {
         thread,
         responseMessage,
         assistant: CAKE_ASSISTANT.NAME,
     };
+};
+
+const getMessage = async (thread, run) => {
+    const messages = await listMessages(thread, run.id);
+
+    return await messages.data[0].content[0].text.value;
 };
 
 const handleToolCalls = async (thread, run, manychatId) => {
@@ -87,7 +94,7 @@ const handleToolCalls = async (thread, run, manychatId) => {
                 case FUNCTIONS.CALL_LIVE_AGENT:
                     return await callLiveAgent(thread, functionArgs, manychatId);
                 case FUNCTIONS.GET_TODAY_DATE:
-                    await getTodayDateInUK(thread, run, toolId);
+                    return await getTodayDateInUK(thread, run, toolId);
                 default:
                     break;
             }
@@ -127,8 +134,15 @@ const callLiveAgent = async (thread, summary, manychatId) => {
 
 const getTodayDateInUK = async (thread, run, toolId) => {
     const datetime = await getTodayDate();
-
     await submitToolsCall(thread, run, toolId, datetime);
+
+    const responseMessage = await getMessage(thread, run);
+   
+    return {
+        thread,
+        responseMessage,
+        assistant: CAKE_ASSISTANT.NAME,
+    };
 };
 
 export {

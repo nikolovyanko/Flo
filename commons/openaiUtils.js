@@ -54,6 +54,7 @@ const deleteThreads = async (threads) => {
 };
 
 const submitToolsCall = async (thread, run, toolId, outputMessage) => {
+        const outputString = `{ "info": "${outputMessage}" }`;
         await openaiClient.beta.threads.runs.submitToolOutputs(
             thread,
             run.id,
@@ -61,7 +62,7 @@ const submitToolsCall = async (thread, run, toolId, outputMessage) => {
                 tool_outputs: [
                     {
                         tool_call_id: toolId,
-                        output: datetime,
+                        output: outputString,
                     },
                 ],
             },
