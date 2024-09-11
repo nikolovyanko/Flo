@@ -6,12 +6,13 @@ const initializeOpenAiClient = () => {
     try {
         const client = new OpenAI({ apiKey: process.env.OPEN_AI_API_KEY });
         openaiClient = client;
-      } catch (error) {
+    } catch (error) {
         console.error("Failed to initialize OpenAI client:", error);
-      }};
-    
+    }
+};
 
-  const createThread = async () => {
+
+const createThread = async () => {
     const newThread = await openaiClient.beta.threads.create();
     console.log(`Created thread: ${newThread.id}`);
     return newThread.id;
@@ -52,13 +53,14 @@ const deleteThreads = async (threads) => {
     return responseMessage;
 };
 
+
 export {
-  initializeOpenAiClient,
-  createThread,
-  sendMessage,
-  createRun,
-  retrieveRun,
-  listMessages,
-  deleteThread,
-  deleteThreads
+    initializeOpenAiClient,
+    createThread,
+    sendMessage,
+    createRun,
+    retrieveRun,
+    listMessages,
+    deleteThread,
+    deleteThreads
 };

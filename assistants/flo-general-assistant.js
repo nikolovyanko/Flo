@@ -12,6 +12,7 @@ const GENERAL_ASSISTANT = {
     ID : process.env.FLO_GENERAL_ASSISTANT_ID,
     NAME : "GeneralAssistant",
 };
+
 const FUNCTIONS = { 
     CALL_CAKE_ASSISTANT: "callCakeAssistant", 
     CALL_CATERING_ASSISTANT: "callCateringAssistant",
@@ -20,7 +21,7 @@ const FUNCTIONS = {
     CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
 };
 
-const messageAssistant = async (message, thread) => {
+const messageAssistant = async (message, thread, manychatId) => {
     try {
         thread = thread ?? await createThread();
 
@@ -37,8 +38,6 @@ const messageAssistant = async (message, thread) => {
 };
 
 const runDefaultAssistant = async (thread, run) => {
-    //TODO exception handling
-
     // Poll for the run status until it is completed
     while (run.status !== "completed") {
         // Add a delay of 1.5 second

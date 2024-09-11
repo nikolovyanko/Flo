@@ -25,18 +25,18 @@ router.delete("/threadDel", async (req, res, next) => {
 
 router.post("/messageFlo", async (req, res, next) => {
   try {
-    const { message, thread } = req.body;
-    let { assistantName } = req.body;
-    assistantName = assistantName || GENERAL_ASSISTANT.NAME;
+    const { message, thread, manychatId } = req.body;
+    let { assistant } = req.body;
+    assistant = assistant || GENERAL_ASSISTANT.NAME;
 
     let result;
-    switch (assistantName) {
+    switch (assistant) {
       case GENERAL_ASSISTANT.NAME:
-        result = await handleAssistantMessage(message, thread, messageFloGeneralAssistant);
+        result = await handleAssistantMessage(message, thread, manychatId, messageFloGeneralAssistant);
         break;
 
       case CAKE_ASSISTANT.NAME:
-        result = await handleAssistantMessage(message, thread, messageFloCakeAssistant);
+        result = await handleAssistantMessage(message, thread, manychatId, messageFloCakeAssistant);
         break;
 
       default:
@@ -54,8 +54,8 @@ router.post("/messageFlo", async (req, res, next) => {
   }
 });
 
-const handleAssistantMessage = async (message, thread, assistantFunction) => {
-  const { thread: newThread, responseMessage, assistant } = await assistantFunction(message, thread);
+const handleAssistantMessage = async (message, thread, manychatId, assistantFunction) => {
+  const { thread: newThread, responseMessage, assistant } = await assistantFunction(message, thread, manychatId);
   const response = formatResponse(responseMessage);
   return { thread: newThread, response, assistant };
 };
