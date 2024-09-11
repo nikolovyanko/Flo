@@ -6,7 +6,8 @@ import {
     createRun,
     retrieveRun,
     listMessages,
-    deleteThread
+    deleteThread,
+    submitToolsCall
 } from "../commons/openaiUtils.js";
 import { getTodayDate } from "../commons/shared-functions.js";
 
@@ -86,7 +87,7 @@ const handleToolCalls = async (thread, run, manychatId) => {
                 case FUNCTIONS.CALL_LIVE_AGENT:
                     return await callLiveAgent(thread, functionArgs, manychatId);
                 case FUNCTIONS.GET_TODAY_DATE:
-                    await getTodayDateInUK(thread, run, toolId);    
+                    await getTodayDateInUK(thread, run, toolId);
                 default:
                     break;
             }
@@ -127,18 +128,7 @@ const callLiveAgent = async (thread, summary, manychatId) => {
 const getTodayDateInUK = async (thread, run, toolId) => {
     const datetime = await getTodayDate();
 
-        await openaiClient.beta.threads.runs.submitToolOutputs(
-            thread,
-            run.id,
-            {
-                tool_outputs: [
-                    {
-                        tool_call_id: toolId,
-                        output: datetime,
-                    },
-                ],
-            },
-        );
+    await submitToolsCall(thread, run, toolId, datetime);
 };
 
 export {

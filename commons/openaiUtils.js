@@ -53,6 +53,21 @@ const deleteThreads = async (threads) => {
     return responseMessage;
 };
 
+const submitToolsCall = async (thread, run, toolId, outputMessage) => {
+        await openaiClient.beta.threads.runs.submitToolOutputs(
+            thread,
+            run.id,
+            {
+                tool_outputs: [
+                    {
+                        tool_call_id: toolId,
+                        output: datetime,
+                    },
+                ],
+            },
+        );
+};
+
 
 export {
     initializeOpenAiClient,
@@ -62,5 +77,6 @@ export {
     retrieveRun,
     listMessages,
     deleteThread,
-    deleteThreads
+    deleteThreads,
+    submitToolsCall
 };

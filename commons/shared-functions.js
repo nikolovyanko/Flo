@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const getTodayDate = async () => {
     const url = 'https://worldtimeapi.org/api/timezone/Europe/London';
     let attempts = 0;
