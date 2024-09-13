@@ -42,6 +42,7 @@ router.post("/messageFlo", async (req, res, next) => {
 
         case WEDDING_ASSISTANT.NAME:
         result = await handleAssistantMessage(message, thread, manychatId, messageFloWeddingAssistant);
+        break;
         
       default:
         return res.status(400).json({ error: "Invalid assistant name" });
