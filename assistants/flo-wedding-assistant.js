@@ -1,4 +1,3 @@
-import axios from "axios";
 import { CustomError } from "../commons/customError.js";
 import {
     createThread,

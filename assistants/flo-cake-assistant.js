@@ -22,10 +22,10 @@ const FUNCTIONS = {
     //IMPLEMENTED
     CALL_LIVE_AGENT: "callLiveAgent",
     GET_TODAY_DATE: "getTodaysDateInUK",
+    CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
     //IMPLEMENTING
     MAKE_CAKE_ORDER: "makeCakeOrder",
-    GET_WHATSAPP_DETAILS: "getWhatsappDetails",
-    CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
+    GET_WHATSAPP_DETAILS: "getWhatsappDetails"
 };
 
 const messageAssistant = async (message, thread, manychatId) => {

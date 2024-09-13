@@ -1,6 +1,7 @@
 import express from "express";
 import { messageFloGeneralAssistant, GENERAL_ASSISTANT } from "../assistants/flo-general-assistant.js";
 import { messageFloCakeAssistant, CAKE_ASSISTANT } from "../assistants/flo-cake-assistant.js";
+import { messageFloWeddingAssistant, WEDDING_ASSISTANT } from "../assistants/flo-wedding-assistant.js";
 import { validateApiKey } from "../middlewares/auth.js";
 import { deleteThreads } from "../commons/openaiUtils.js";
 
@@ -39,6 +40,9 @@ router.post("/messageFlo", async (req, res, next) => {
         result = await handleAssistantMessage(message, thread, manychatId, messageFloCakeAssistant);
         break;
 
+        case WEDDING_ASSISTANT.NAME:
+        result = await handleAssistantMessage(message, thread, manychatId, messageFloWeddingAssistant);
+        
       default:
         return res.status(400).json({ error: "Invalid assistant name" });
     }
