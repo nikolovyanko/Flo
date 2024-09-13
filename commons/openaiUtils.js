@@ -39,6 +39,11 @@ const listMessages = async (thread, runId) => {
     return await openaiClient.beta.threads.messages.list(thread, runId);
 };
 
+const getMessage = async (thread, run) => {
+    const messages = await listMessages(thread, run.id);
+    return await messages.data[0].content[0].text.value;
+};
+
 const deleteThread = async (thread) => {
     await openaiClient.beta.threads.del(thread);
     console.log(`Thread deleted: ${thread}`);
@@ -79,6 +84,7 @@ export {
     createRun,
     retrieveRun,
     listMessages,
+    getMessage,
     deleteThread,
     deleteThreads,
     submitToolsCall

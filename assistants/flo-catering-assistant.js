@@ -10,9 +10,9 @@ import {
 } from "../commons/openaiUtils.js";
 import { getTodayDateInUK, getWhatsappDetails, callLiveAgent } from "../commons/shared-functions.js";
 
-const EVENT_ASSISTANT = {
-    ID: process.env.FLO_EVENT_ASSISTANT_ID,
-    NAME: "EventAssistant"
+const CATERING_ASSISTANT = {
+    ID: process.env.FLO_CATERING_ASSISTANT_ID,
+    NAME: "CateringAssistant"
 };
 
 const FUNCTIONS = {
@@ -20,22 +20,19 @@ const FUNCTIONS = {
     GET_TODAY_DATE: "getTodaysDateInUK",
     GET_WHATSAPP_DETAILS: "getWhatsappDetails"
 };
-
 const messageAssistant = async (message, thread, manychatId) => {
     try {
         thread = thread ?? await createThread();
-
         await sendMessage(thread, message);
-        const run = await createRun(thread, EVENT_ASSISTANT.ID);
-
-        return await runEventAssistant(thread, run, manychatId);
+        const run = await createRun(thread, CATERING_ASSISTANT.ID);
+        return await runCateringAssistant(thread, run, manychatId);
     } catch (error) {
-        console.error(`Error in ${EVENT_ASSISTANT.NAME} : ${error.message}`, error);
-        throw new CustomError(`Error in ${EVENT_ASSISTANT.NAME} : ${error.message}`, error);
+        console.error(`Error in ${CATERING_ASSISTANT.NAME} : ${error.message}`, error);
+        throw new CustomError(`Error in ${CATERING_ASSISTANT.NAME} : ${error.message}`, error);
     }
 };
 
-const runEventAssistant = async (thread, run, manychatId) => {
+const runCateringAssistant = async (thread, run, manychatId) => {
     // Poll for the run status until it is completed
     while (run.status !== "completed") {
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -51,7 +48,7 @@ const runEventAssistant = async (thread, run, manychatId) => {
     return {
         thread,
         responseMessage,
-        assistant: EVENT_ASSISTANT.NAME,
+        assistant: CATERING_ASSISTANT.NAME,
     };
 };
 
@@ -69,11 +66,11 @@ const handleToolCalls = async (thread, run, manychatId) => {
 
             switch (functionName) {
                 case FUNCTIONS.CALL_LIVE_AGENT:
-                    return await callLiveAgent(thread, functionArgs, manychatId, EVENT_ASSISTANT.NAME);
+                    return await callLiveAgent(thread, functionArgs, manychatId, CATERING_ASSISTANT.NAME);
                 case FUNCTIONS.GET_TODAY_DATE:
-                    return await getTodayDateInUK(thread, run, toolId, EVENT_ASSISTANT.NAME);
+                    return await getTodayDateInUK(thread, run, toolId, CATERING_ASSISTANT.NAME);
                 case FUNCTIONS.GET_WHATSAPP_DETAILS:
-                    return await getWhatsappDetails(thread, run, toolId, manychatId, EVENT_ASSISTANT.NAME);
+                    return await getWhatsappDetails(thread, run, toolId, manychatId, CATERING_ASSISTANT.NAME);
                 default:
                     break;
             }
@@ -81,7 +78,7 @@ const handleToolCalls = async (thread, run, manychatId) => {
     }
 };
 
-export {
-    EVENT_ASSISTANT,
-    messageAssistant as messageFloEventAssistant,
+export { 
+    CATERING_ASSISTANT,
+    messageAssistant as messageFloCateringAssistant,
 };

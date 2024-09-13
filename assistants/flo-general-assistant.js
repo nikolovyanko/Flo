@@ -1,12 +1,11 @@
-import { messageFloCakeAssistant } from "./flo-cake-assistant.js";
-import { messageFloWeddingAssistant } from "./flo-wedding-assistant.js";
 import { CustomError } from "../commons/customError.js";
+import { callCakeAssistant, callWeddingAssistant, callCateringAssistant, callEventAssistant } from "../commons/shared-functions.js";
 import {
     createThread,
     sendMessage,
     createRun,
     retrieveRun,
-    listMessages,
+    getMessage,
     deleteThread
 } from "../commons/openaiUtils.js";
 
@@ -53,9 +52,7 @@ const runDefaultAssistant = async (thread, run) => {
         run = await retrieveRun(thread, run.id);
     }
 
-    const messages = await listMessages(thread, run.id);
-    const responseMessage = await messages.data[0].content[0].text.value;
-
+    const responseMessage = await getMessage(thread, run);
     return {
         thread,
         responseMessage,
@@ -79,47 +76,22 @@ const handleToolCalls = async (thread, run) => {
             // Call the required function
             switch (functionName) {
                 case FUNCTIONS.CALL_CAKE_ASSISTANT:
-                    return await callCakeAssistantMakeOrder(thread, functionArgs);
+                    return await callCakeAssistant(thread, functionArgs, GENERAL_ASSISTANT.NAME);
+
+                case FUNCTIONS.CALL_CATERING_ASSISTANT:
+                    return await callCateringAssistant(thread, functionArgs, GENERAL_ASSISTANT.NAME);
+
+                case FUNCTIONS.CALL_EVENT_ASSISTANT:
+                    return await callEventAssistant(thread, functionArgs, GENERAL_ASSISTANT.NAME);
 
                 case FUNCTIONS.CALL_WEDDING_ASSISTANT:
-                    return await callWeddingAssistant(thread, functionArgs);
+                    return await callWeddingAssistant(thread, functionArgs, GENERAL_ASSISTANT.NAME);
                 default:
                     break;
             }
         }
     }
 
-};
-
-const callCakeAssistantMakeOrder = async (thread, args) => {
-    try {
-        //First we clear the current thread, as it is for the General Assistant, and we need a new thread for the Cake Assistant
-        await deleteThread(thread);
-
-        const { orderProduct } = JSON.parse(args); // Parse the JSON string into an object
-
-        const message = `I want to order a custom cake ${orderProduct}`;
-
-        return await messageFloCakeAssistant(message, null);
-    } catch (error) {
-        console.error("Error in callCakeAssistantMakeOrder:", error);
-        throw error;
-    }
-};
-
-const callWeddingAssistant = async (thread, args) => {
-    try {
-        await deleteThread(thread);
-
-        const { summary } = JSON.parse(args);
-
-        const message = `${summary}`;
-
-        return await messageFloWeddingAssistant(message, null);
-    } catch (error) {
-        console.error("Error in callWeddingAssistant:", error);
-        throw error;
-    }
 };
 
 export {

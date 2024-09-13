@@ -4,14 +4,12 @@ import {
     sendMessage,
     createRun,
     retrieveRun,
-    listMessages,
-    deleteThread,
-    submitToolsCall
+    getMessage
 } from "../commons/openaiUtils.js";
-import { getTodayDate, whatsAppDetailsCall, callLiveAgent } from "../commons/shared-functions.js";
+import { getTodayDateInUK, getWhatsappDetails, callLiveAgent } from "../commons/shared-functions.js";
 
 const WEDDING_ASSISTANT = {
-    ID: process.env.FLO_WEDDING_ID,
+    ID: process.env.FLO_WEDDING_ASSISTANT_ID,
     NAME: "WeddingAssistant"
 };
 
@@ -58,15 +56,8 @@ const runWeddingAssistant = async (thread, run, manychatId) => {
     };
 };
 
-const getMessage = async (thread, run) => {
-    const messages = await listMessages(thread, run.id);
-
-    return await messages.data[0].content[0].text.value;
-};
-
 const handleToolCalls = async (thread, run, manychatId) => {
     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
-
     //Iterate over the tool calls to identify different functions
     for (const toolCall of toolCalls) {
         const toolType = toolCall.type;
@@ -80,54 +71,17 @@ const handleToolCalls = async (thread, run, manychatId) => {
                 case FUNCTIONS.CALL_LIVE_AGENT:
                     return await callLiveAgent(thread, functionArgs, manychatId, WEDDING_ASSISTANT.NAME);
                 case FUNCTIONS.GET_TODAY_DATE:
-                    return await getTodayDateInUK(thread, run, toolId);
+                    return await getTodayDateInUK(thread, run, toolId, WEDDING_ASSISTANT.NAME);
                 case FUNCTIONS.GET_WHATSAPP_DETAILS:
-                    return await getWhatsappDetails(thread, run, toolId, manychatId);
+                    return await getWhatsappDetails(thread, run, toolId, manychatId, WEDDING_ASSISTANT.NAME);
                 default:
                     break;
             }
         }
     }
 };
-const getTodayDateInUK = async (thread, run, toolId) => {
-    try {
-        const datetime = await getTodayDate();
-        
-        const outputString = `{ "today_date_time": "${datetime}" }`;
-        await submitToolsCall(thread, run, toolId, outputString);
-       
-        const responseMessage = await getMessage(thread, run);
-
-        return {
-            thread,
-            responseMessage,
-            assistant: WEDDING_ASSISTANT.NAME,
-        };
-    } catch (error) {
-        console.error('Error in WEDDING.getTodayDateInUK:', error);
-        throw error;
-    }
-};
-
-const getWhatsappDetails = async (thread, run, toolId, manychatId) => {
-    try {
-        const outputString = await whatsAppDetailsCall(manychatId);
-        
-        await submitToolsCall(thread, run, toolId, outputString);
-        const responseMessage = await getMessage(thread, run);
-
-        return {
-            thread,
-            responseMessage,
-            assistant: WEDDING_ASSISTANT.NAME,
-        };
-    } catch (error) {
-        console.error('Error in WEDDING.getWhatsappDetails:', error);
-        throw error;
-    }
-};
 
 export {
-    messageAssistant as messageFloWeddingAssistant,
     WEDDING_ASSISTANT,
+    messageAssistant as messageFloWeddingAssistant,
 };
