@@ -93,7 +93,7 @@ const getTodayDateInUK = async (thread, run, toolId) => {
     try {
         const datetime = await getTodayDate();
         
-        const outputString = `{ "info": "${datetime}" }`;
+        const outputString = `{ "today_date_time": "${datetime}" }`;
         await submitToolsCall(thread, run, toolId, outputString);
        
         const responseMessage = await getMessage(thread, run);
