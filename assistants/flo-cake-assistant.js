@@ -1,5 +1,6 @@
 import axios from "axios";
 import { CustomError } from "../commons/customError.js";
+import { messageFloWeddingAssistant } from "./flo-wedding-assistant.js";
 import {
     createThread,
     sendMessage,
@@ -9,14 +10,12 @@ import {
     deleteThread,
     submitToolsCall
 } from "../commons/openaiUtils.js";
-import { getTodayDate } from "../commons/shared-functions.js";
+import { getTodayDate, whatsAppDetailsCall, callLiveAgent } from "../commons/shared-functions.js";
 
 const CAKE_ASSISTANT = {
     ID: process.env.FLO_CAKE_ASSISTANT_ID,
     NAME: "CakeOrderAssistant",
-    LIVE_AGENT_ENDPOINT: process.env.LIVE_AGENT_ENDPOINT,
     CAKE_ORDER_ENDPOINT: process.env.CAKE_ORDER_ENDPOINT,
-    GET_WHATSAPP_ENDPOINT: process.env.GET_WHATSAPP_ENDPOINT,
 };
 
 const FUNCTIONS = {
@@ -28,8 +27,6 @@ const FUNCTIONS = {
     GET_WHATSAPP_DETAILS: "getWhatsappDetails",
     CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
 };
-//TODO put the logic for callLiveAgent function inside the openaiUtils.js file and add parameter for summary 
-//the summary will be individual for every assistant however it will be treated the same way.
 
 const messageAssistant = async (message, thread, manychatId) => {
     try {
@@ -88,35 +85,19 @@ const handleToolCalls = async (thread, run, manychatId) => {
 
             switch (functionName) {
                 case FUNCTIONS.CALL_LIVE_AGENT:
-                    return await callLiveAgent(thread, functionArgs, manychatId);
+                    return await callLiveAgent(thread, functionArgs, manychatId, CAKE_ASSISTANT.NAME);
                 case FUNCTIONS.GET_TODAY_DATE:
                     return await getTodayDateInUK(thread, run, toolId);
                 case FUNCTIONS.MAKE_CAKE_ORDER:
                     return await makeCakeOrder(thread, run, toolId, functionArgs, manychatId);
                 case FUNCTIONS.GET_WHATSAPP_DETAILS:
                     return await getWhatsappDetails(thread, run, toolId, manychatId);
-
                 case FUNCTIONS.CALL_WEDDING_ASSISTANT:
-                    return await callWeddingAssistant(thread, run, toolId, functionArgs); 
+                    return await callWeddingAssistant(thread, functionArgs); 
                 default:
                     break;
             }
         }
-    }
-};
-
-const callLiveAgent = async (thread, summary, manychatId) => {
-    try {
-        await axios.post(CAKE_ASSISTANT.LIVE_AGENT_ENDPOINT, { summary, manychatId });
-        await deleteThread(thread);
-
-        return {
-            responseMessage: "stop",
-            assistant: CAKE_ASSISTANT.NAME,
-        };
-    } catch (error) {
-        console.error('Error calling live agent:', error);
-        throw error;
     }
 };
 
@@ -135,7 +116,7 @@ const getTodayDateInUK = async (thread, run, toolId) => {
             assistant: CAKE_ASSISTANT.NAME,
         };
     } catch (error) {
-        console.error('Error in getTodayDateInUK:', error);
+        console.error('Error in CAKE.getTodayDateInUK:', error);
         throw error;
     }
 };
@@ -163,10 +144,7 @@ const makeCakeOrder = async (thread, run, toolId, cakeOrderDetails, manychatId) 
 
 const getWhatsappDetails = async (thread, run, toolId, manychatId) => {
     try {
-        const response =  await axios.post(CAKE_ASSISTANT.GET_WHATSAPP_ENDPOINT, { manychatId });
-
-        const {full_name, phone} = response.data;
-        const outputString = `{ "full_name": "${full_name}", "phone": "${phone}" }`;
+        const outputString = await whatsAppDetailsCall(manychatId);
         
         await submitToolsCall(thread, run, toolId, outputString);
         const responseMessage = await getMessage(thread, run);
@@ -177,12 +155,12 @@ const getWhatsappDetails = async (thread, run, toolId, manychatId) => {
             assistant: CAKE_ASSISTANT.NAME,
         };
     } catch (error) {
-        console.error('Error in getWhatsappDetails:', error);
+        console.error('Error in CAKE.getWhatsappDetails:', error);
         throw error;
     }
 };
 
-const callWeddingAssistant = async (thread, run, toolId, args) => {
+const callWeddingAssistant = async (thread, args) => {
     try {
         await deleteThread(thread);
 
@@ -190,10 +168,9 @@ const callWeddingAssistant = async (thread, run, toolId, args) => {
 
         const message = `${summary}`;
 
-        //TODO
         return await messageFloWeddingAssistant(message, null);
     } catch (error) {
-        console.error("Error in callWeddingAssistant:", error);
+        console.error("Error in CAKE.callWeddingAssistant:", error);
         throw error;
     }
 };

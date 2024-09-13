@@ -1,4 +1,5 @@
 import { messageFloCakeAssistant } from "./flo-cake-assistant.js";
+import { messageFloWeddingAssistant } from "./flo-wedding-assistant.js";
 import { CustomError } from "../commons/customError.js";
 import {
     createThread,
@@ -68,7 +69,6 @@ const handleToolCalls = async (thread, run) => {
 
     //iterate over the tool calls to identify different functions
     for (const toolCall of toolCalls) {
-        let resolvedActionMessage = "";
         const toolType = toolCall.type;
         const toolId = toolCall.id;
 
@@ -81,6 +81,8 @@ const handleToolCalls = async (thread, run) => {
                 case FUNCTIONS.CALL_CAKE_ASSISTANT:
                     return await callCakeAssistantMakeOrder(thread, functionArgs);
 
+                case FUNCTIONS.CALL_WEDDING_ASSISTANT:
+                    return await callWeddingAssistant(thread, functionArgs);
                 default:
                     break;
             }
@@ -105,7 +107,20 @@ const callCakeAssistantMakeOrder = async (thread, args) => {
     }
 };
 
+const callWeddingAssistant = async (thread, args) => {
+    try {
+        await deleteThread(thread);
 
+        const { summary } = JSON.parse(args);
+
+        const message = `${summary}`;
+
+        return await messageFloWeddingAssistant(message, null);
+    } catch (error) {
+        console.error("Error in callWeddingAssistant:", error);
+        throw error;
+    }
+};
 
 export {
     messageAssistant as messageFloGeneralAssistant,
