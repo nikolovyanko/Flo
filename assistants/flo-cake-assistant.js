@@ -15,13 +15,15 @@ const CAKE_ASSISTANT = {
     ID: process.env.FLO_CAKE_ASSISTANT_ID,
     NAME: "CakeOrderAssistant",
     LIVE_AGENT_ENDPOINT: process.env.LIVE_AGENT_ENDPOINT,
+    CAKE_ORDER_ENDPOINT: process.env.CAKE_ORDER_ENDPOINT,
+    GET_WHATSAPP_ENDPOINT: process.env.GET_WHATSAPP_ENDPOINT,
 };
 
 const FUNCTIONS = {
+    //IMPLEMENTED
     CALL_LIVE_AGENT: "callLiveAgent",
     GET_TODAY_DATE: "getTodaysDateInUK",
-
-    //NOT IMPLEMENTED YET
+    //IMPLEMENTING
     MAKE_CAKE_ORDER: "makeCakeOrder",
     GET_WHATSAPP_DETAILS: "getWhatsappDetails",
     CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
@@ -56,7 +58,7 @@ const runCakeOrderAssistant = async (thread, run, manychatId) => {
         //Checking the status at the end of the loop to avoid unnecessary polling
         run = await retrieveRun(thread, run.id);
     }
-    
+
     const responseMessage = await getMessage(thread, run);
 
     return {
@@ -73,12 +75,10 @@ const getMessage = async (thread, run) => {
 };
 
 const handleToolCalls = async (thread, run, manychatId) => {
-    const toolCalls =
-        run.required_action.submit_tool_outputs.tool_calls;
+    const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
 
-    //iterate over the tool calls to identify different functions
+    //Iterate over the tool calls to identify different functions
     for (const toolCall of toolCalls) {
-        let resolvedActionMessage = "";
         const toolType = toolCall.type;
         const toolId = toolCall.id;
 
@@ -86,33 +86,24 @@ const handleToolCalls = async (thread, run, manychatId) => {
             const functionName = toolCall.function.name;
             const functionArgs = toolCall.function.arguments;
 
-            // Call the needed function
             switch (functionName) {
                 case FUNCTIONS.CALL_LIVE_AGENT:
                     return await callLiveAgent(thread, functionArgs, manychatId);
                 case FUNCTIONS.GET_TODAY_DATE:
                     return await getTodayDateInUK(thread, run, toolId);
+                case FUNCTIONS.MAKE_CAKE_ORDER:
+                    return await makeCakeOrder(thread, run, toolId, functionArgs, manychatId);
+                case FUNCTIONS.GET_WHATSAPP_DETAILS:
+                    return await getWhatsappDetails(thread, run, toolId, manychatId);
+
+                case FUNCTIONS.CALL_WEDDING_ASSISTANT:
+                    return await callWeddingAssistant(thread, run, toolId, functionArgs); 
                 default:
                     break;
             }
         }
-
-        // Handle each tool call as needed
-        // await openaiClient.beta.threads.runs.submitToolOutputs(
-        //     thread,
-        //     run.id,
-        //     {
-        //         tool_outputs: [
-        //             {
-        //                 tool_call_id: toolId,
-        //                 output: resolvedActionMessage,
-        //             },
-        //         ],
-        //     },
-        // );
     }
 };
-
 
 const callLiveAgent = async (thread, summary, manychatId) => {
     try {
@@ -130,16 +121,81 @@ const callLiveAgent = async (thread, summary, manychatId) => {
 };
 
 const getTodayDateInUK = async (thread, run, toolId) => {
-    const datetime = await getTodayDate();
-    await submitToolsCall(thread, run, toolId, datetime);
+    try {
+        const datetime = await getTodayDate();
+        
+        const outputString = `{ "info": "${datetime}" }`;
+        await submitToolsCall(thread, run, toolId, outputString);
+       
+        const responseMessage = await getMessage(thread, run);
 
-    const responseMessage = await getMessage(thread, run);
-   
-    return {
-        thread,
-        responseMessage,
-        assistant: CAKE_ASSISTANT.NAME,
-    };
+        return {
+            thread,
+            responseMessage,
+            assistant: CAKE_ASSISTANT.NAME,
+        };
+    } catch (error) {
+        console.error('Error in getTodayDateInUK:', error);
+        throw error;
+    }
+};
+
+const makeCakeOrder = async (thread, run, toolId, cakeOrderDetails, manychatId) => {
+    try {
+        const response = await axios.post(CAKE_ASSISTANT.CAKE_ORDER_ENDPOINT, cakeOrderDetails);
+        //TODO destruct the response and add the response message to the output
+        //ntje-gefa-crxj-wrbp-ccdo
+        await submitToolsCall(thread, run, toolId, response.data);
+
+        const responseMessage = await getMessage(thread, run);
+
+        return {
+            thread,
+            responseMessage,
+            assistant: CAKE_ASSISTANT.NAME,
+        }
+
+    } catch (error) {
+        console.error('Error in makeCakeOrder:', error);
+        throw error;
+    }
+};
+
+const getWhatsappDetails = async (thread, run, toolId, manychatId) => {
+    try {
+        const response =  await axios.post(CAKE_ASSISTANT.GET_WHATSAPP_ENDPOINT, { manychatId });
+
+        const {full_name, phone} = response.data;
+        const outputString = `{ "full_name": "${full_name}", "phone": "${phone}" }`;
+        
+        await submitToolsCall(thread, run, toolId, outputString);
+        const responseMessage = await getMessage(thread, run);
+
+        return {
+            thread,
+            responseMessage,
+            assistant: CAKE_ASSISTANT.NAME,
+        };
+    } catch (error) {
+        console.error('Error in getWhatsappDetails:', error);
+        throw error;
+    }
+};
+
+const callWeddingAssistant = async (thread, run, toolId, args) => {
+    try {
+        await deleteThread(thread);
+
+        const { summary } = JSON.parse(args);
+
+        const message = `${summary}`;
+
+        //TODO
+        return await messageFloWeddingAssistant(message, null);
+    } catch (error) {
+        console.error("Error in callWeddingAssistant:", error);
+        throw error;
+    }
 };
 
 export {
