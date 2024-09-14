@@ -115,7 +115,7 @@ const callCateringAssistant = async (thread, args, assistantName) => {
         const message = `${summary}`;
         return await messageFloCateringAssistant(message, null);
     } catch (error) {
-        console.error(`Error in ${assistantName} callWeddingAssistant:`, error);
+        console.error(`Error in ${assistantName} callCateringAssistant:`, error);
         throw error;
     }
 };
@@ -124,11 +124,11 @@ const callCateringAssistant = async (thread, args, assistantName) => {
 const callEventAssistant = async (thread, args, assistantName) => {
     try {
         await deleteThread(thread);
-        const { summary } = JSON.parse(args);
-        const message = `${summary}`;
+        const { location, event_type } = JSON.parse(args);
+        const message = `The event type :${event_type} at location: ${location}`;
         return await messageFloEventAssistant(message, null);
     } catch (error) {
-        console.error(`Error in ${assistantName} callWeddingAssistant:`, error);
+        console.error(`Error in ${assistantName} callEventAssistant:`, error);
         throw error;
     }
 };
