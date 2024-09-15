@@ -95,13 +95,14 @@ const handleToolCalls = async (thread, run, manychatId) => {
 
 const makeCakeOrder = async (thread, run, toolId, cakeOrderDetails, manychatId) => {
     try {
-        const response = await axios.post(CAKE_ASSISTANT.CAKE_ORDER_ENDPOINT, cakeOrderDetails);
-        //TODO destruct the response and add the response message to the output
-        //ntje-gefa-crxj-wrbp-ccdo
-        await submitToolsCall(thread, run, toolId, response.data);
+         //ntje-gefa-crxj-wrbp-ccdo
+        const bodyJson = JSON.parse(cakeOrderDetails);
+        bodyJson.manychatId = manychatId;
+        const response = await axios.post(CAKE_ASSISTANT.CAKE_ORDER_ENDPOINT, bodyJson);
+        const { link : paymentLink } = response.data;
 
+        await submitToolsCall(thread, run, toolId, paymentLink);
         const responseMessage = await getMessage(thread, run);
-
         return {
             thread,
             responseMessage,

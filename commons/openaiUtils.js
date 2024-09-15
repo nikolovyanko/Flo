@@ -59,19 +59,22 @@ const deleteThreads = async (threads) => {
 };
 
 const submitToolsCall = async (thread, run, toolId, outputMessage) => {
-    while (run.status !== "completed") {        
-        await openaiClient.beta.threads.runs.submitToolOutputs(
-            thread,
-            run.id,
-            {
-                tool_outputs: [
-                    {
-                        tool_call_id: toolId,
-                        output: outputMessage,
-                    },
-                ],
-            },
-        );
+    while (run.status !== "completed") {
+
+        if (run.status === "requires_action") {
+            await openaiClient.beta.threads.runs.submitToolOutputs(
+                thread,
+                run.id,
+                {
+                    tool_outputs: [
+                        {
+                            tool_call_id: toolId,
+                            output: outputMessage,
+                        },
+                    ],
+                },
+            );
+        }
         run = await retrieveRun(thread, run.id);
     }
 };
