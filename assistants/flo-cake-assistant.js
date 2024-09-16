@@ -33,7 +33,6 @@ const messageAssistant = async (message, thread, manychatId) => {
 
 const handleToolCalls = async (thread, run, manychatId) => {
     const toolCalls = run.required_action.submit_tool_outputs.tool_calls;
-    console.log("toolCalls", toolCalls);
     //Iterate over the tool calls to identify different functions
     for (const toolCall of toolCalls) {
         const toolType = toolCall.type;
@@ -42,8 +41,6 @@ const handleToolCalls = async (thread, run, manychatId) => {
         if (toolType === "function") {
             const functionName = toolCall.function.name;
             const functionArgs = toolCall.function.arguments;
-            console.log("functionName", functionName);
-            console.log("functionArgs", functionArgs);
             switch (functionName) {
                 case FUNCTIONS.MAKE_CAKE_ORDER:
                     return await makeCakeOrder(thread, run, toolId, functionArgs, manychatId);

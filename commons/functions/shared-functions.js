@@ -127,7 +127,6 @@ const callWeddingAssistant = async (thread, args, assistantName) => {
     }
 };
 
-//TODO check the right argument it might not be summary
 const callCateringAssistant = async (thread, args, assistantName) => {
     try {
         await deleteThread(thread);
@@ -140,7 +139,6 @@ const callCateringAssistant = async (thread, args, assistantName) => {
     }
 };
 
-//TODO check the right argument it might not be summary
 const callEventAssistant = async (thread, args, assistantName) => {
     try {
         await deleteThread(thread);
@@ -162,7 +160,6 @@ const runAssistant = async (message, initialThread, manychatId, assistant, handl
         run = await retrieveRun(thread, run.id);
 
         if (run.status === "requires_action") {
-            console.log(`Handling tool calls for ${assistant.NAME}`);
             return await handleToolCalls(thread, run);
         }
         //Checking the status at the end of the loop to avoid unnecessary polling
