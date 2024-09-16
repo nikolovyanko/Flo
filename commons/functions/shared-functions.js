@@ -1,9 +1,30 @@
 import axios from "axios";
-import { messageFloCakeAssistant } from "../assistants/flo-cake-assistant.js";
-import { messageFloWeddingAssistant } from "../assistants/flo-wedding-assistant.js";
-import { messageFloCateringAssistant } from "../assistants/flo-catering-assistant.js";
-import { messageFloEventAssistant } from "../assistants/flo-event-assistant.js";
-import { getMessage, deleteThread, submitToolsCall } from "./openaiUtils.js";
+import {messageFloCakeAssistant} from "../../assistants/flo-cake-assistant.js";
+import {messageFloWeddingAssistant} from "../../assistants/flo-wedding-assistant.js";
+import {messageFloCateringAssistant} from "../../assistants/flo-catering-assistant.js";
+import {messageFloEventAssistant} from "../../assistants/flo-event-assistant.js";
+import {
+    createRun,
+    createThread,
+    deleteThread,
+    getMessage,
+    retrieveRun,
+    sendMessage,
+    submitToolsCall
+} from "./openai-functions.js";
+
+const FUNCTIONS = {
+    CALL_CAKE_ASSISTANT: "callCakeAssistant",
+    CALL_CATERING_ASSISTANT: "callCateringAssistant",
+    CALL_CUPCAKE_ASSISTANT: "callCupcakeAssistant",
+    CALL_EVENT_ASSISTANT: "callEventBookingAssistant",
+    CALL_WEDDING_ASSISTANT: "callWeddingAssistant",
+    CALL_LIVE_AGENT: "callLiveAgent",
+    GET_TODAY_DATE: "getTodaysDateInUK",
+    GET_WHATSAPP_DETAILS: "getWhatsappDetails",
+    //IMPLEMENTING
+    MAKE_CAKE_ORDER: "makeCakeOrder",
+};
 
 const fetchTodayDateTime = async () => {
     const url = 'https://worldtimeapi.org/api/timezone/Europe/London';
@@ -13,8 +34,7 @@ const fetchTodayDateTime = async () => {
     while (attempts < maxAttempts) {
         try {
             const response = await axios.get(url);
-            const datetime = response.data.datetime;
-            return datetime;
+            return response.data.datetime;
         } catch (error) {
             attempts++;
             if (attempts >= maxAttempts) {
@@ -49,7 +69,7 @@ const getTodayDateInUK = async (thread, run, toolId, assistantName) => {
 const callLiveAgent = async (thread, summary, manychatId, assistantName) => {
     try {
         const url = process.env.LIVE_AGENT_ENDPOINT;
-        await axios.post(url, { summary, manychatId });
+        await axios.post(url, {summary, manychatId});
         await deleteThread(thread);
 
         return {
@@ -64,8 +84,8 @@ const callLiveAgent = async (thread, summary, manychatId, assistantName) => {
 
 const getWhatsappDetails = async (thread, run, toolId, manychatId, assistantName) => {
     try {
-        const response = await axios.post(process.env.GET_WHATSAPP_ENDPOINT, { manychatId });
-        const { full_name, phone } = response.data;
+        const response = await axios.post(process.env.GET_WHATSAPP_ENDPOINT, {manychatId});
+        const {full_name, phone} = response.data;
         const outputString = `{ "full_name": "${full_name}", "phone": "${phone}" }`;
 
         await submitToolsCall(thread, run, toolId, outputString);
@@ -86,7 +106,7 @@ const callCakeAssistant = async (thread, args, assistantName) => {
     try {
         //First we clear the current thread, as it is for the General Assistant, and we need a new thread for the Cake Assistant
         await deleteThread(thread);
-        const { orderProduct } = JSON.parse(args); // Parse the JSON string into an object
+        const {orderProduct} = JSON.parse(args); // Parse the JSON string into an object
         const message = `I want to order a custom cake ${orderProduct}`;
         return await messageFloCakeAssistant(message, null);
     } catch (error) {
@@ -98,7 +118,7 @@ const callCakeAssistant = async (thread, args, assistantName) => {
 const callWeddingAssistant = async (thread, args, assistantName) => {
     try {
         await deleteThread(thread);
-        const { summary } = JSON.parse(args);
+        const {summary} = JSON.parse(args);
         const message = `${summary}`;
         return await messageFloWeddingAssistant(message, null);
     } catch (error) {
@@ -111,7 +131,7 @@ const callWeddingAssistant = async (thread, args, assistantName) => {
 const callCateringAssistant = async (thread, args, assistantName) => {
     try {
         await deleteThread(thread);
-        const { summary } = JSON.parse(args);
+        const {summary} = JSON.parse(args);
         const message = `${summary}`;
         return await messageFloCateringAssistant(message, null);
     } catch (error) {
@@ -124,13 +144,43 @@ const callCateringAssistant = async (thread, args, assistantName) => {
 const callEventAssistant = async (thread, args, assistantName) => {
     try {
         await deleteThread(thread);
-        const { location, event_type } = JSON.parse(args);
+        const {location, event_type} = JSON.parse(args);
         const message = `The event type :${event_type} at location: ${location}`;
         return await messageFloEventAssistant(message, null);
     } catch (error) {
         console.error(`Error in ${assistantName} callEventAssistant:`, error);
         throw error;
     }
+};
+
+const runAssistant = async (message, initialThread, manychatId, assistant, handleToolCalls) => {
+    let {thread, run} = await initThreadAndRun(initialThread, message, assistant.ID);
+    // Poll for the run status until it is completed
+    while (run.status !== "completed") {
+        // Add a delay of 1.5 second
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        run = await retrieveRun(thread, run.id);
+
+        if (run.status === "requires_action") {
+            console.log(`Handling tool calls for ${assistant.NAME}`);
+            return await handleToolCalls(thread, run);
+        }
+        //Checking the status at the end of the loop to avoid unnecessary polling
+        run = await retrieveRun(thread, run.id);
+    }
+    const responseMessage = await getMessage(thread, run);
+    return {
+        thread,
+        responseMessage,
+        assistant: assistant.NAME,
+    };
+};
+
+const initThreadAndRun = async (thread, message, assistant) => {
+    thread = thread ?? await createThread();
+    await sendMessage(thread, message);
+    const run = await createRun(thread, assistant);
+    return {thread, run};
 };
 
 export {
@@ -140,5 +190,7 @@ export {
     callCakeAssistant,
     callWeddingAssistant,
     callCateringAssistant,
-    callEventAssistant
+    callEventAssistant,
+    runAssistant,
+    FUNCTIONS
 };

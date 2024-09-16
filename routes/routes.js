@@ -3,8 +3,8 @@ import { messageFloGeneralAssistant, GENERAL_ASSISTANT } from "../assistants/flo
 import { messageFloCakeAssistant, CAKE_ASSISTANT } from "../assistants/flo-cake-assistant.js";
 import { messageFloWeddingAssistant, WEDDING_ASSISTANT } from "../assistants/flo-wedding-assistant.js";
 import {messageFloEventAssistant, EVENT_ASSISTANT} from "../assistants/flo-event-assistant.js";
-import { validateApiKey } from "../middlewares/auth.js";
-import { deleteThreads } from "../commons/openaiUtils.js";
+import { validateApiKey } from "./middlewares/auth.js";
+import { deleteThreads } from "../commons/functions/openai-functions.js";
 
 const router = express.Router();
 

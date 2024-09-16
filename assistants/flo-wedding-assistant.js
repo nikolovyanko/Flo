@@ -1,59 +1,30 @@
-import { CustomError } from "../commons/customError.js";
+import { CustomError } from "../commons/err/customError.js";
 import {
-    createThread,
-    sendMessage,
-    createRun,
-    retrieveRun,
-    getMessage
-} from "../commons/openaiUtils.js";
-import { getTodayDateInUK, getWhatsappDetails, callLiveAgent } from "../commons/shared-functions.js";
+    getTodayDateInUK,
+    getWhatsappDetails,
+    callLiveAgent,
+    FUNCTIONS,
+    runAssistant
+} from "../commons/functions/shared-functions.js";
 
 const WEDDING_ASSISTANT = {
     ID: process.env.FLO_WEDDING_ASSISTANT_ID,
     NAME: "WeddingAssistant"
 };
 
-const FUNCTIONS = {
-    CALL_LIVE_AGENT: "callLiveAgent",
-    GET_TODAY_DATE: "getTodaysDateInUK",
-    GET_WHATSAPP_DETAILS: "getWhatsappDetails"
-};
-
 const messageAssistant = async (message, thread, manychatId) => {
     try {
-
-        thread = thread ?? await createThread();
-
-        await sendMessage(thread, message);
-        const run = await createRun(thread, WEDDING_ASSISTANT.ID);
-
-        return await runWeddingAssistant(thread, run, manychatId);
+        return await runAssistant(
+            message,
+            thread,
+            manychatId,
+            WEDDING_ASSISTANT,
+            handleToolCalls
+        );
     } catch (error) {
         console.error(`Error in ${WEDDING_ASSISTANT.NAME} : ${error.message}`, error);
         throw new CustomError(`Error in ${WEDDING_ASSISTANT.NAME} : ${error.message}`, error);
     }
-};
-
-const runWeddingAssistant = async (thread, run, manychatId) => {
-    // Poll for the run status until it is completed
-    while (run.status !== "completed") {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        run = await retrieveRun(thread, run.id);
-
-        if (run.status === "requires_action") {
-            return await handleToolCalls(thread, run, manychatId);
-        }
-        //Checking the status at the end of the loop to avoid unnecessary polling
-        run = await retrieveRun(thread, run.id);
-    }
-
-    const responseMessage = await getMessage(thread, run);
-
-    return {
-        thread,
-        responseMessage,
-        assistant: WEDDING_ASSISTANT.NAME,
-    };
 };
 
 const handleToolCalls = async (thread, run, manychatId) => {
